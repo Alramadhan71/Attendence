@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AutoAttend | Muslim Solutions</title>
+    <link rel="preconnect" href="https://unpkg.com" />
+    <link rel="preconnect" href="https://tile.openstreetmap.org" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+    <link rel="stylesheet" href="styles.css?v=platform-3" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="app-header">
+        <a class="brand-logo-link" href="#/login" aria-label="AutoAttend home">
+          <img class="brand-logo" src="assets/AutoAttend.png" alt="AutoAttend logo" />
+        </a>
+        <div class="brand-copy">
+          <a class="brand-title" href="#/login">AutoAttend</a>
+          <a class="brand-subtitle" href="https://www.muslimalramadan71.com/" target="_blank" rel="noreferrer">
+            By Muslim Solutions
+          </a>
+        </div>
+        <div class="header-session" id="header-session" hidden></div>
+        <button class="btn" id="header-logout" type="button" hidden>Logout</button>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle color theme">Light</button>
+      </header>
+      <main id="view" class="view"></main>
+    </div>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="app.js?v=platform-3"></script>
+  </body>
+</html>
