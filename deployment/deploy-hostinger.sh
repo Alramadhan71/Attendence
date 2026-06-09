@@ -29,12 +29,16 @@ if [ -d "$GATEWAY_DIR" ]; then
   BEGIN="# BEGIN $APP_NAME"
   END="# END $APP_NAME"
   touch "$CADDYFILE"
+  exec 9>"$CADDYFILE.lock"
+  flock 9
+  TMP_FILE="$(mktemp)"
   awk -v begin="$BEGIN" -v end="$END" '
     $0 == begin { skip = 1; next }
     $0 == end { skip = 0; next }
     !skip { print }
-  ' "$CADDYFILE" > "$CADDYFILE.tmp"
-  mv "$CADDYFILE.tmp" "$CADDYFILE"
+  ' "$CADDYFILE" > "$TMP_FILE"
+  cat "$TMP_FILE" > "$CADDYFILE"
+  rm -f "$TMP_FILE"
   cat >> "$CADDYFILE" <<CADDY
 $BEGIN
 $DOMAIN {
@@ -46,8 +50,12 @@ CADDY
 
   CADDY_CONTAINER="$(cd "$GATEWAY_DIR" && docker compose ps -q caddy 2>/dev/null || true)"
   if [ -n "$CADDY_CONTAINER" ]; then
-    docker network connect "$NETWORK" "$CADDY_CONTAINER" 2>/dev/null || true
     cd "$GATEWAY_DIR"
+    if ! docker exec "$CADDY_CONTAINER" grep -Fq "$DOMAIN" /etc/caddy/Caddyfile; then
+      docker compose up -d --force-recreate caddy
+      CADDY_CONTAINER="$(docker compose ps -q caddy)"
+    fi
+    docker network connect "$NETWORK" "$CADDY_CONTAINER" 2>/dev/null || true
     docker compose up -d
     docker exec "$CADDY_CONTAINER" caddy reload --config /etc/caddy/Caddyfile
   fi
