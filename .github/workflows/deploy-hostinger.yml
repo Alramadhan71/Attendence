@@ -39,11 +39,17 @@ jobs:
       - name: Configure SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
+          SSH_PRIVATE_KEY_B64: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY_B64 }}
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          printf '%b\n' "$SSH_PRIVATE_KEY" | sed 's/\r$//' > ~/.ssh/hostinger_deploy_key
+          if [ -n "$SSH_PRIVATE_KEY_B64" ]; then
+            printf '%s' "$SSH_PRIVATE_KEY_B64" | base64 -d > ~/.ssh/hostinger_deploy_key
+          else
+            printf '%b\n' "$SSH_PRIVATE_KEY" | sed 's/\r$//' > ~/.ssh/hostinger_deploy_key
+          fi
           chmod 600 ~/.ssh/hostinger_deploy_key
+          ssh-keygen -y -f ~/.ssh/hostinger_deploy_key >/dev/null
           ssh-keyscan -p "$HOSTINGER_PORT" -H "$HOSTINGER_HOST" >> ~/.ssh/known_hosts
 
       - name: Prepare app directory
