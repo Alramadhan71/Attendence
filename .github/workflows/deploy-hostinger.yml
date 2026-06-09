@@ -1,0 +1,70 @@
+name: Deploy to Hostinger VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: hostinger-vps
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST || 'srv1628863.hstgr.cloud' }}
+      HOSTINGER_USER: ${{ secrets.HOSTINGER_USER || 'root' }}
+      HOSTINGER_PORT: ${{ secrets.HOSTINGER_PORT || '22' }}
+      APP_DIR: /opt/attendence
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate deployment secret
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SSH_PRIVATE_KEY" ]; then
+            echo "HOSTINGER_SSH_PRIVATE_KEY is not configured." >&2
+            exit 1
+          fi
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/hostinger_deploy_key
+          chmod 600 ~/.ssh/hostinger_deploy_key
+          ssh-keyscan -p "$HOSTINGER_PORT" -H "$HOSTINGER_HOST" >> ~/.ssh/known_hosts
+
+      - name: Prepare app directory
+        run: |
+          ssh -p "$HOSTINGER_PORT" \
+            -i ~/.ssh/hostinger_deploy_key \
+            -o IdentitiesOnly=yes \
+            "$HOSTINGER_USER@$HOSTINGER_HOST" \
+            "mkdir -p '$APP_DIR'"
+
+      - name: Sync files
+        run: |
+          rsync -azc --delete \
+            -e "ssh -p $HOSTINGER_PORT -i ~/.ssh/hostinger_deploy_key -o IdentitiesOnly=yes" \
+            --exclude ".git" \
+            ./ "$HOSTINGER_USER@$HOSTINGER_HOST:$APP_DIR/"
+
+      - name: Deploy and verify
+        run: |
+          ssh -p "$HOSTINGER_PORT" \
+            -i ~/.ssh/hostinger_deploy_key \
+            -o IdentitiesOnly=yes \
+            "$HOSTINGER_USER@$HOSTINGER_HOST" \
+            "cd '$APP_DIR' && bash deployment/deploy-hostinger.sh"
