@@ -30,9 +30,10 @@ jobs:
       - name: Validate deployment secret
         env:
           SSH_PRIVATE_KEY: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
+          SSH_PRIVATE_KEY_B64: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY_B64 }}
         run: |
-          if [ -z "$SSH_PRIVATE_KEY" ]; then
-            echo "HOSTINGER_SSH_PRIVATE_KEY is not configured." >&2
+          if [ -z "$SSH_PRIVATE_KEY" ] && [ -z "$SSH_PRIVATE_KEY_B64" ]; then
+            echo "HOSTINGER_SSH_PRIVATE_KEY_B64 or HOSTINGER_SSH_PRIVATE_KEY is not configured." >&2
             exit 1
           fi
 
